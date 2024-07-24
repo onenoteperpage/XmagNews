@@ -75,68 +75,141 @@ public class XmagNews
         return await MakeRequest("top-headlines", queryString);
     }
 
-    public async Task<ArticlesResult> MakeRequest(string endpoint, string querystring)
-{
-    // return obj
-    var articlesResult = new ArticlesResult();
-
-    // make http request
-    var httpRequest = new HttpRequestMessage(HttpMethod.Get, BASE_URL + endpoint + "?" + querystring);
-    var httpResponse = await httpClient.SendAsync(httpRequest);
-
-    var httpContent = httpResponse.Content;
-    if (httpContent != null)
+    public ArticlesResult GetTopHeadlines(TopHeadlinesRequest request)
     {
-        var json = await httpContent.ReadAsStringAsync();
-        if (!string.IsNullOrWhiteSpace(json))
+        return GetTopHeadlinesAsync(request).Result;
+    }
+
+    public async Task<ArticlesResult> GetEverythingAsync(EverythingRequest request)
+    {
+        // build query string
+        var queryParams = new List<string>();
+
+         if (!string.IsNullOrWhiteSpace(request.Q))
         {
-            // convert json to obj
-            ApiResponse? apiResponse = JsonConvert.DeserializeObject<ApiResponse>(json);
+            queryParams.Add("q=" + request.Q);
+        }
 
-            if (apiResponse != null)
+        // sources
+        if (request.Sources.Count > 0)
+        {
+            queryParams.Add("sources=" + string.Join(",", request.Sources));
+        }
+
+        // domains
+        if (request.Domains.Count > 0)
+        {
+            queryParams.Add("domains=" + string.Join(",", request.Sources));
+        }
+
+        // from
+        if (request.From.HasValue)
+        {
+            queryParams.Add("from=" + string.Format("{0:s}", request.From.Value));
+        }
+
+        // to
+        if (request.To.HasValue)
+        {
+            queryParams.Add("to=" + string.Format("{0:s}", request.To.Value));
+        }
+
+        // language
+        if (request.Language.HasValue)
+        {
+            queryParams.Add("language=" + request.Language.Value.ToString().ToLowerInvariant());
+        }
+
+        // sortBy
+        if (request.SortBy.HasValue)
+        {
+            queryParams.Add("sortBy=" + request.SortBy.Value.ToString());
+        }
+
+        // page
+        if (request.Page > 1)
+        {
+            queryParams.Add("page=" + request.Page);
+        }
+
+        // page size
+        if (request.PageSize > 0)
+        {
+            queryParams.Add("pageSize=" + request.PageSize);
+        }
+
+        // join them together
+        var querystring = string.Join("&", queryParams.ToArray());
+
+        return await MakeRequest("everything", querystring);
+    }
+
+     public ArticlesResult GetEverything(EverythingRequest request)
+    {
+        return GetEverythingAsync(request).Result;
+    }
+
+    public async Task<ArticlesResult> MakeRequest(string endpoint, string querystring)
+    {
+        // return obj
+        var articlesResult = new ArticlesResult();
+
+        // make http request
+        var httpRequest = new HttpRequestMessage(HttpMethod.Get, BASE_URL + endpoint + "?" + querystring);
+        var httpResponse = await httpClient.SendAsync(httpRequest);
+
+        var httpContent = httpResponse.Content;
+        if (httpContent != null)
+        {
+            var json = await httpContent.ReadAsStringAsync();
+            if (!string.IsNullOrWhiteSpace(json))
             {
-                articlesResult.Status = apiResponse.Status;
-                if (articlesResult.Status == Statuses.Ok)
-                {
-                    articlesResult.TotalResults = apiResponse.TotalResults;
-                    articlesResult.Articles = apiResponse.Articles;
-                }
-                else
-                {
-                    ErrorCodes errorCode = ErrorCodes.UnexpectedError;
-                    try
-                    {
-                        if (apiResponse.Code.HasValue)
-                        {
-                            errorCode = (ErrorCodes)apiResponse.Code.Value;
-                        }
-                    }
-                    catch (Exception e)
-                    {
-                        Debug.WriteLine("The API returned an error code that wasn't expected: " + apiResponse.Code);
-                        Debug.WriteLine($"Error Msg: {e}");
-                    }
+                // convert json to obj
+                ApiResponse? apiResponse = JsonConvert.DeserializeObject<ApiResponse>(json);
 
-                    articlesResult.Error = new Error
+                if (apiResponse != null)
+                {
+                    articlesResult.Status = apiResponse.Status;
+                    if (articlesResult.Status == Statuses.Ok)
                     {
-                        Code = errorCode,
-                        Message = apiResponse.Message,
-                    };
+                        articlesResult.TotalResults = apiResponse.TotalResults;
+                        articlesResult.Articles = apiResponse.Articles;
+                    }
+                    else
+                    {
+                        ErrorCodes errorCode = ErrorCodes.UnexpectedError;
+                        try
+                        {
+                            if (apiResponse.Code.HasValue)
+                            {
+                                errorCode = (ErrorCodes)apiResponse.Code.Value;
+                            }
+                        }
+                        catch (Exception e)
+                        {
+                            Debug.WriteLine("The API returned an error code that wasn't expected: " + apiResponse.Code);
+                            Debug.WriteLine($"Error Msg: {e}");
+                        }
+
+                        articlesResult.Error = new Error
+                        {
+                            Code = errorCode,
+                            Message = apiResponse.Message,
+                        };
+                    }
                 }
             }
         }
-    }
-    else
-    {
-        articlesResult.Status = Statuses.Error;
-        articlesResult.Error = new Error
+        else
         {
-            Code = ErrorCodes.UnexpectedError,
-            Message = "The API returned an empty response. Is internet connection enabled?",
-        };
+            articlesResult.Status = Statuses.Error;
+            articlesResult.Error = new Error
+            {
+                Code = ErrorCodes.UnexpectedError,
+                Message = "The API returned an empty response. Is internet connection enabled?",
+            };
+        }
+
+        return articlesResult;
     }
-
-    return articlesResult;
-}
-
 }
