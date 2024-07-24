@@ -76,65 +76,67 @@ public class XmagNews
     }
 
     public async Task<ArticlesResult> MakeRequest(string endpoint, string querystring)
+{
+    // return obj
+    var articlesResult = new ArticlesResult();
+
+    // make http request
+    var httpRequest = new HttpRequestMessage(HttpMethod.Get, BASE_URL + endpoint + "?" + querystring);
+    var httpResponse = await httpClient.SendAsync(httpRequest);
+
+    var httpContent = httpResponse.Content;
+    if (httpContent != null)
     {
-        // return obj
-        var articlesResult = new ArticlesResult();
-
-        // make http request
-        var httpRequest = new HttpRequestMessage(HttpMethod.Get, BASE_URL + endpoint + "?" + querystring);
-        var httpResponse = await httpClient.SendAsync(httpRequest);
-
-        var httpContent = httpResponse.Content;
-        if (httpContent != null)
+        var json = await httpContent.ReadAsStringAsync();
+        if (!string.IsNullOrWhiteSpace(json))
         {
-            var json = await httpContent.ReadAsStringAsync();
-            if (!string.IsNullOrWhiteSpace(json))
+            // convert json to obj
+            ApiResponse? apiResponse = JsonConvert.DeserializeObject<ApiResponse>(json);
+
+            if (apiResponse != null)
             {
-                // convert json to obj
-                ApiResponse? apiResponse = JsonConvert.DeserializeObject<ApiResponse>(json);
-
-                if (apiResponse != null)
+                articlesResult.Status = apiResponse.Status;
+                if (articlesResult.Status == Statuses.Ok)
                 {
-                    articlesResult.Status = apiResponse.Status;
-                    if (articlesResult.Status == Statuses.Ok)
+                    articlesResult.TotalResults = apiResponse.TotalResults;
+                    articlesResult.Articles = apiResponse.Articles;
+                }
+                else
+                {
+                    ErrorCodes errorCode = ErrorCodes.UnexpectedError;
+                    try
                     {
-                        articlesResult.TotalResults = apiResponse.TotalResults;
-                        articlesResult.Articles = apiResponse.Articles;
+                        if (apiResponse.Code.HasValue)
+                        {
+                            errorCode = (ErrorCodes)apiResponse.Code.Value;
+                        }
                     }
-                    else
+                    catch (Exception e)
                     {
-                        ErrorCodes errorCode = ErrorCodes.UnexpectedError;
-                        try
-                        {
-#pragma warning disable CS8629 // Nullable value type may be null.
-                            errorCode = (ErrorCodes)apiResponse.Code;
-#pragma warning restore CS8629 // Nullable value type may be null.
-                        }
-                        catch (Exception e)
-                        {
-                            Debug.WriteLine("The API returned an error code that wasn't expected: " + apiResponse.Code);
-                            Debug.WriteLine($"Error Msg: {e.ToString()}");
-                        }
+                        Debug.WriteLine("The API returned an error code that wasn't expected: " + apiResponse.Code);
+                        Debug.WriteLine($"Error Msg: {e}");
+                    }
 
-                        articlesResult.Error = new Error
-                        {
-                            Code = errorCode,
-                            Message = apiResponse.Message,
-                        };
-                    }
+                    articlesResult.Error = new Error
+                    {
+                        Code = errorCode,
+                        Message = apiResponse.Message,
+                    };
                 }
             }
         }
-        else
-        {
-            articlesResult.Status = Statuses.Error;
-            articlesResult.Error = new Error
-            {
-                Code = ErrorCodes.UnexpectedError,
-                Message = "The API returned an empty response. Is internet connection enabled?",
-            };
-        }
-
-        return articlesResult;
     }
+    else
+    {
+        articlesResult.Status = Statuses.Error;
+        articlesResult.Error = new Error
+        {
+            Code = ErrorCodes.UnexpectedError,
+            Message = "The API returned an empty response. Is internet connection enabled?",
+        };
+    }
+
+    return articlesResult;
+}
+
 }
