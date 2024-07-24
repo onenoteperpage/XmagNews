@@ -4,13 +4,22 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <Version>1.0.0</Version>
+    <DebugType>none</DebugType>
+    
+    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+    <AssemblyTitle>Xmag News API Library</AssemblyTitle>
+    <AssemblyDescription>MyLibrary is a .NET class library for NewsAPI replacing the existing Nuget package built for .NET 4.5</AssemblyDescription>
+    <AssemblyCompany>OneNotePerPage</AssemblyCompany>
+    <AssemblyProduct>XmagNews</AssemblyProduct>
+    <AssemblyCopyright>Copyright © 2024 https://github.com/onenoteperpage/XmagNews</AssemblyCopyright>
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
+
     <FileVersion>1.0.0.0</FileVersion>
+    <Version>1.0.0</Version>
     <Authors>oneonoteperpage</Authors>
     <Company>OneNotePerPage</Company>
-    <Product>MyLibrary</Product>
-    <Description>MyLibrary is a .NET class library for NewsAPI replacing the existing Nuget package built for .NET 4.5</Description>
+    <Product>XmagNews</Product>
+    <Description>XmagNews is a .NET class library for NewsAPI replacing the existing Nuget package built for .NET 4.5</Description>
     <Copyright>Copyright © 2024 OneNotePerPage</Copyright>
   </PropertyGroup>
 
