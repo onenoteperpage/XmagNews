@@ -28,34 +28,14 @@ jobs:
       run: dotnet build --configuration Release
 
     - name: Publish project
-      run: dotnet publish --configuration Release -o ./publish
+      run: dotnet publish --configuration Release
 
     - name: Create zip file
-      run: zip -r MyLibrary.zip ./publish
+      run: zip -r XmagNews.zip ./bin/Release/net8.0/
 
     - name: GH Release
       uses: softprops/action-gh-release@v2.0.8
       with:
-        files: MyLibrary.zip
-  
+        files: XmagNews.zip
+        body_path: CHANGELOG
 
-    # - name: Create GitHub release
-    #   id: create_release
-    #   uses: actions/create-release@v1
-    #   env:
-    #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    #   with:
-    #     tag_name: ${{ github.ref }}
-    #     release_name: Release ${{ github.ref }}
-    #     draft: false
-    #     prerelease: false
-
-    # - name: Upload release asset
-    #   uses: actions/upload-release-asset@v1
-    #   env:
-    #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    #   with:
-    #     upload_url: ${{ steps.create_release.outputs.upload_url }}
-    #     asset_path: ./MyLibrary.zip
-    #     asset_name: MyLibrary.zip
-    #     asset_content_type: application/zip
